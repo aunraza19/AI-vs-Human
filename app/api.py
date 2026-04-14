@@ -60,7 +60,7 @@ def _build_room_name(topic_id: str) -> str:
 
 async def _ensure_room_and_dispatch(room_name: str, metadata_json: str) -> None:
     async with api.LiveKitAPI(
-        url=settings.livekit_url,
+        url=settings.livekit_server_url,
         api_key=settings.livekit_api_key,
         api_secret=settings.livekit_api_secret,
     ) as lkapi:

@@ -37,6 +37,7 @@ _load_env_file(PROJECT_ROOT / ".env")
 @dataclass(frozen=True)
 class Settings:
     livekit_url: str
+    livekit_server_url: str
     livekit_api_key: str
     livekit_api_secret: str
     google_api_key: str
@@ -49,6 +50,8 @@ class Settings:
         missing: list[str] = []
         if not self.livekit_url:
             missing.append("LIVEKIT_URL")
+        if not self.livekit_server_url:
+            missing.append("LIVEKIT_SERVER_URL")
         if not self.livekit_api_key:
             missing.append("LIVEKIT_API_KEY")
         if not self.livekit_api_secret:
@@ -59,8 +62,8 @@ class Settings:
 
     def validate_for_agent(self) -> None:
         missing: list[str] = []
-        if not self.livekit_url:
-            missing.append("LIVEKIT_URL")
+        if not self.livekit_server_url:
+            missing.append("LIVEKIT_SERVER_URL")
         if not self.livekit_api_key:
             missing.append("LIVEKIT_API_KEY")
         if not self.livekit_api_secret:
@@ -73,6 +76,9 @@ class Settings:
 
 
 def load_settings() -> Settings:
+    livekit_url = os.getenv("LIVEKIT_URL", "").strip()
+    livekit_server_url = os.getenv("LIVEKIT_SERVER_URL", livekit_url).strip()
+
     max_turns_raw = os.getenv("MAX_HUMAN_TURNS", "8")
     try:
         max_human_turns = int(max_turns_raw)
@@ -82,7 +88,8 @@ def load_settings() -> Settings:
     max_human_turns = min(max(max_human_turns, 3), 20)
 
     return Settings(
-        livekit_url=os.getenv("LIVEKIT_URL", "").strip(),
+        livekit_url=livekit_url,
+        livekit_server_url=livekit_server_url,
         livekit_api_key=os.getenv("LIVEKIT_API_KEY", "").strip(),
         livekit_api_secret=os.getenv("LIVEKIT_API_SECRET", "").strip(),
         google_api_key=os.getenv("GOOGLE_API_KEY", "").strip(),
