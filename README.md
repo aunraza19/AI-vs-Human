@@ -1,70 +1,102 @@
-# AI vs Human Debate System
+# AI vs Human Debate
 
-Real-time debate app based on the required architecture:
+Real-time voice debate app for live society displays.  
+A human participant debates an AI agent over selected topics, with strict turn flow, interruption support, and bilingual debating (English/Urdu).
 
-Frontend (mic/speaker UI) -> LiveKit -> Python LiveKit Agent -> Gemini Live RealtimeModel
+## Overview
 
-## What is implemented
+This project runs on:
 
-- LiveKit Agents backend with Gemini Live Realtime model (`gemini-3.1-flash-live-preview`)
-- Topic-based personas and strict debate prompt injection
-- Bilingual debate mode (English/Urdu) with strict language enforcement in system prompts
-- Debate state machine:
-  - `INIT -> AI_INTRO -> USER_INTRO -> DEBATE_LOOP -> END`
-- Human interruption (barge-in) handling during AI speech
-- Silero VAD configuration tuned for noisy environments
-- FastAPI token/room/dispatch service for frontend connection
-- Browser UI for name entry, 5 topic selection, mic input, and speaker output
+`Frontend (Mic + Speaker UI) -> LiveKit (WebRTC) -> Python LiveKit Agent -> Gemini Live RealtimeModel`
 
-## Run with Docker Compose (all services together)
+The user enters name, selects topic, stance, and language, then starts a live audio debate.  
+The AI always takes the opposite stance and responds in the selected language.
 
-1. Copy env file:
-   ```bash
-   cp .env.example .env
-   ```
-2. Update `.env`:
-   - set `GOOGLE_API_KEY`
-   - set a strong `LIVEKIT_API_SECRET` (32+ chars)
-   - keep:
-     - `LIVEKIT_URL=ws://localhost:7880` (browser)
-     - `LIVEKIT_SERVER_URL=ws://livekit:7880` (internal container network)
-3. Start everything:
-   ```bash
-   docker compose up --build
-   ```
+## Features
+
+- Real-time speech-to-speech debate using `gemini-3.1-flash-live-preview`
+- Self-hosted LiveKit (open source) support
+- Topic-based debate personas (5 curated topics)
+- User stance selection (`agree`/`disagree`) with enforced opposite AI stance
+- Language selection (`english`/`urdu`) with strict language blocks in prompt logic
+- Debate state machine: `INIT -> AI_INTRO -> USER_INTRO -> DEBATE_LOOP -> END`
+- Human barge-in support while AI is speaking
+- Turn limit control with graceful debate completion
+- FastAPI token/room/dispatch backend
+- Browser UI with live activity feed, AI speaking overlay, and ESC overlay minimize/restore
+
+## Environment Variables
+
+Copy `.env.example` to `.env` and set values:
+
+- `LIVEKIT_URL`: URL returned to browser clients (example: `ws://localhost:7880`)
+- `LIVEKIT_SERVER_URL`: URL used internally by API/worker to reach LiveKit
+  - Docker Compose: `ws://livekit:7880`
+  - Local host run: `ws://127.0.0.1:7880`
+- `LIVEKIT_API_KEY`
+- `LIVEKIT_API_SECRET` (use a strong 32+ character secret)
+- `GOOGLE_API_KEY`
+- Optional:
+  - `AGENT_NAME` (default: `debate-agent`)
+  - `GEMINI_MODEL` (default: `gemini-3.1-flash-live-preview`)
+  - `GEMINI_VOICE` (default: `Puck`)
+  - `MAX_HUMAN_TURNS` (default: `8`)
+
+## Run with Docker Compose (Recommended)
+
+1. Create env file:
+```bash
+cp .env.example .env
+```
+
+2. Update `.env` with your keys/secrets (especially `GOOGLE_API_KEY` and `LIVEKIT_API_SECRET`).
+
+3. Start all services:
+```bash
+docker compose up --build
+```
+
 4. Open:
-   - `http://localhost:8000`
 
-If you open the frontend from another device, set:
+`http://localhost:8000`
 
-- `LIVEKIT_NODE_IP=<your-host-lan-ip>`
-- `LIVEKIT_URL=ws://<your-host-lan-ip>:7880`
+If `7880` is already in use, stop the existing LiveKit container/process first.
 
-## Run without Docker
+If frontend is opened from another device on LAN, set:
 
-1. Install dependencies:
+- `LIVEKIT_NODE_IP=<host-lan-ip>`
+- `LIVEKIT_URL=ws://<host-lan-ip>:7880`
+
+## Run Locally (Without Compose)
+
+1. Install Python dependencies:
 ```bash
 pip install -r requirements.txt
 ```
-2. Make sure a LiveKit server is running (local Docker example):
+
+2. Start LiveKit (example via Docker):
 ```bash
 docker run --rm -p 7880:7880 -p 7881:7881 -p 7882:7882/udp \
   -e LIVEKIT_KEYS="$LIVEKIT_API_KEY: $LIVEKIT_API_SECRET" \
   livekit/livekit-server:v1.10 --dev --bind 0.0.0.0 --node-ip 127.0.0.1
 ```
-3. Run worker:
+
+3. Start worker:
 ```bash
 python -m app.worker dev
 ```
-4. Run API + frontend server:
+
+4. Start API/frontend server:
 ```bash
 uvicorn app.api:app --reload --port 8000
 ```
+
 5. Open:
-   - `http://localhost:8000`
 
-## Notes
+`http://localhost:8000`
 
-- The API endpoint creates a room and explicit dispatch for `AGENT_NAME`.
-- Frontend calls `/token`, connects to LiveKit, publishes mic audio, and plays AI audio.
-- Session ends when the participant asks to stop or when `MAX_HUMAN_TURNS` is reached.
+## Debate Behavior Notes
+
+- API creates room + explicit agent dispatch for each session.
+- Frontend calls `/token`, joins LiveKit, publishes mic audio, and plays AI audio.
+- Session ends when participant asks to stop, disconnects, or max turn limit is reached.
