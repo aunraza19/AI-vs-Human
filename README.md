@@ -8,6 +8,7 @@ Frontend (mic/speaker UI) -> LiveKit -> Python LiveKit Agent -> Gemini Live Real
 
 - LiveKit Agents backend with Gemini Live Realtime model (`gemini-3.1-flash-live-preview`)
 - Topic-based personas and strict debate prompt injection
+- Bilingual debate mode (English/Urdu) with strict language enforcement in system prompts
 - Debate state machine:
   - `INIT -> AI_INTRO -> USER_INTRO -> DEBATE_LOOP -> END`
 - Human interruption (barge-in) handling during AI speech

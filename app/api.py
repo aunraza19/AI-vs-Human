@@ -36,6 +36,7 @@ class TokenRequest(BaseModel):
     name: str = Field(min_length=1, max_length=60)
     topic_id: str
     user_stance: Literal["agree", "disagree"]
+    language: Literal["english", "urdu"]
     room_name: str | None = None
 
 
@@ -123,6 +124,7 @@ async def create_token(payload: TokenRequest) -> TokenResponse:
             "name": user_name,
             "topic_id": payload.topic_id,
             "user_stance": payload.user_stance,
+            "language": payload.language,
             "max_turns": settings.max_human_turns,
         }
     )
@@ -141,7 +143,13 @@ async def create_token(payload: TokenRequest) -> TokenResponse:
         .with_identity(identity)
         .with_name(user_name)
         .with_metadata(metadata_json)
-        .with_attributes({"topic_id": payload.topic_id, "user_stance": payload.user_stance})
+        .with_attributes(
+            {
+                "topic_id": payload.topic_id,
+                "user_stance": payload.user_stance,
+                "language": payload.language,
+            }
+        )
         .with_grants(
             api.VideoGrants(
                 room_join=True,

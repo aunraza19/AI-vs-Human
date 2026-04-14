@@ -18,6 +18,7 @@ from livekit.plugins import google, silero
 from app.config import load_settings
 from app.debate_agent import DebateAgent
 from app.prompting import (
+    DebateLanguage,
     UserStance,
     build_system_prompt,
     wants_to_end_debate,
@@ -30,7 +31,7 @@ logger = logging.getLogger("debate.worker")
 
 def _parse_session_metadata(
     participant: rtc.RemoteParticipant, default_max_turns: int
-) -> tuple[str, TopicProfile, UserStance, int]:
+) -> tuple[str, TopicProfile, UserStance, DebateLanguage, int]:
     metadata: dict[str, object] = {}
     if participant.metadata:
         try:
@@ -46,6 +47,8 @@ def _parse_session_metadata(
     topic = get_topic(str(metadata.get("topic_id", "")))
     raw_user_stance = str(metadata.get("user_stance", "disagree")).strip().lower()
     user_stance: UserStance = "agree" if raw_user_stance == "agree" else "disagree"
+    raw_language = str(metadata.get("language", "english")).strip().lower()
+    language: DebateLanguage = "urdu" if raw_language == "urdu" else "english"
 
     max_turns = metadata.get("max_turns", default_max_turns)
     if isinstance(max_turns, int):
@@ -56,7 +59,7 @@ def _parse_session_metadata(
         parsed_max_turns = default_max_turns
 
     parsed_max_turns = min(max(parsed_max_turns, 3), 20)
-    return user_name, topic, user_stance, parsed_max_turns
+    return user_name, topic, user_stance, language, parsed_max_turns
 
 
 def _build_session(
@@ -114,21 +117,27 @@ async def entrypoint(ctx: JobContext) -> None:
             return
         raise
 
-    user_name, topic, user_stance, max_turns = _parse_session_metadata(
+    user_name, topic, user_stance, language, max_turns = _parse_session_metadata(
         participant, settings.max_human_turns
     )
     state = DebateState(max_human_turns=max_turns)
 
     logger.info(
-        "Starting debate room=%s participant=%s topic=%s user_stance=%s max_turns=%s",
+        "Starting debate room=%s participant=%s topic=%s user_stance=%s language=%s max_turns=%s",
         ctx.room.name,
         participant.identity,
         topic.topic_id,
         user_stance,
+        language,
         max_turns,
     )
 
-    base_prompt = build_system_prompt(user_name=user_name, topic=topic, user_stance=user_stance)
+    base_prompt = build_system_prompt(
+        user_name=user_name,
+        topic=topic,
+        user_stance=user_stance,
+        language=language,
+    )
     agent = DebateAgent(instructions=base_prompt, state=state, topic=topic)
     session = _build_session(
         instructions=base_prompt,

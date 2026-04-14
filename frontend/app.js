@@ -5,6 +5,7 @@ const state = {
   topics: [],
   selectedTopicId: null,
   selectedUserStance: "agree",
+  selectedLanguage: "english",
   audioEls: new Map(),
   aiIdentity: null,
   aiSpeaking: false,
@@ -15,6 +16,7 @@ const state = {
 const nameInput = document.getElementById("name-input");
 const topicsGrid = document.getElementById("topics-grid");
 const stanceGrid = document.getElementById("stance-grid");
+const languageGrid = document.getElementById("language-grid");
 const connectBtn = document.getElementById("connect-btn");
 const disconnectBtn = document.getElementById("disconnect-btn");
 const statusPill = document.getElementById("status-pill");
@@ -171,6 +173,27 @@ function wireStanceSelection() {
   });
 }
 
+function wireLanguageSelection() {
+  if (!languageGrid) {
+    return;
+  }
+
+  languageGrid.querySelectorAll(".stance-card").forEach((card) => {
+    const radio = card.querySelector("input[name='debate-language']");
+    if (!radio) {
+      return;
+    }
+
+    card.addEventListener("click", () => {
+      radio.checked = true;
+      state.selectedLanguage = radio.value;
+      languageGrid
+        .querySelectorAll(".stance-card")
+        .forEach((item) => item.classList.toggle("selected", item === card));
+    });
+  });
+}
+
 async function loadTopics() {
   const response = await fetch("/topics");
   if (!response.ok) {
@@ -301,6 +324,11 @@ async function connectSession() {
     return;
   }
 
+  if (!state.selectedLanguage) {
+    setStatus("Select language", "error");
+    return;
+  }
+
   connectBtn.disabled = true;
   setStatus("Connecting", "connecting");
 
@@ -312,6 +340,7 @@ async function connectSession() {
         name,
         topic_id: state.selectedTopicId,
         user_stance: state.selectedUserStance,
+        language: state.selectedLanguage,
       }),
     });
 
@@ -393,6 +422,7 @@ document.addEventListener("keydown", (event) => {
 });
 
 wireStanceSelection();
+wireLanguageSelection();
 
 loadTopics()
   .then(() => appendLog("Ready", "Enter your name, pick a topic, and start the debate."))

@@ -5,6 +5,7 @@ from typing import Literal
 from app.topics import TopicProfile
 
 UserStance = Literal["agree", "disagree"]
+DebateLanguage = Literal["english", "urdu"]
 
 
 def ai_stance_from_user_stance(user_stance: UserStance) -> str:
@@ -15,9 +16,33 @@ def describe_user_stance(user_stance: UserStance) -> str:
     return "AGREES with the topic statement" if user_stance == "agree" else "DISAGREES with the topic statement"
 
 
-def build_system_prompt(user_name: str, topic: TopicProfile, user_stance: UserStance) -> str:
+def _language_block(language: DebateLanguage) -> str:
+    if language == "urdu":
+        return """
+Language mode (STRICT):
+- صرف اردو میں جواب دیں۔
+- صرف اردو رسم الخط (Arabic script) استعمال کریں۔
+- Roman Urdu یا English الفاظ/جملے شامل نہ کریں۔
+- اگر صارف انگریزی یا دوسری زبان میں بات کرے، مختصراً کہیں کہ مباحثہ اردو میں رکھیں، پھر صرف اردو میں جواب جاری رکھیں۔
+""".strip()
+
+    return """
+Language mode (STRICT):
+- Respond only in English.
+- Do not use Urdu script or Roman Urdu.
+- If the participant speaks Urdu or another language, briefly ask them to continue in English, then continue the debate in English only.
+""".strip()
+
+
+def build_system_prompt(
+    user_name: str,
+    topic: TopicProfile,
+    user_stance: UserStance,
+    language: DebateLanguage,
+) -> str:
     ai_stance = ai_stance_from_user_stance(user_stance)
     user_stance_text = describe_user_stance(user_stance)
+    language_block = _language_block(language)
     return f"""
 You are a professional live debater in front of an audience.
 
@@ -26,7 +51,10 @@ Persona:
 - Debate topic: "{topic.title}".
 - Human participant stance: {user_stance_text}.
 - Your stance is strictly {ai_stance}, opposite to the participant.
+- Selected debate language: {language.upper()}.
 - Core framing: {topic.framing}
+
+{language_block}
 
 Debate rules:
 - Start first with a short opening statement, then invite the user to respond.
