@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI vs Human Debate</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="layout">
+      <section class="panel hero">
+        <p class="kicker">Society Display</p>
+        <h1>AI vs Human Debate</h1>
+        <p class="subtitle">
+          Choose a topic, take the mic, and debate a live AI persona in real time.
+        </p>
+        <div id="status-pill" class="status-pill idle">Idle</div>
+      </section>
+
+      <section class="panel controls">
+        <div class="field">
+          <label for="name-input">Your Name</label>
+          <input id="name-input" maxlength="60" placeholder="Enter your name" />
+        </div>
+
+        <div class="field">
+          <span class="label-text">Select Debate Topic</span>
+          <div id="topics-grid" class="topics-grid" aria-live="polite"></div>
+        </div>
+
+        <div class="field">
+          <span class="label-text">Your Position</span>
+          <div class="stance-grid" id="stance-grid">
+            <label class="stance-card selected" data-stance="agree">
+              <input class="stance-radio" type="radio" name="user-stance" value="agree" checked />
+              <span class="stance-title">I Agree</span>
+              <span class="stance-subtitle">I support the topic statement.</span>
+            </label>
+            <label class="stance-card" data-stance="disagree">
+              <input class="stance-radio" type="radio" name="user-stance" value="disagree" />
+              <span class="stance-title">I Disagree</span>
+              <span class="stance-subtitle">I oppose the topic statement.</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="connect-btn" class="btn primary">Start Debate</button>
+          <button id="disconnect-btn" class="btn ghost" disabled>End Session</button>
+        </div>
+      </section>
+
+      <section class="panel log-panel">
+        <h2>Live Activity</h2>
+        <div id="activity-log" class="activity-log" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <div id="ai-backdrop" class="ai-backdrop" aria-hidden="true"></div>
+
+    <aside id="ai-window" class="ai-window" aria-hidden="true">
+      <div id="ai-window-frame" class="ai-window-frame">
+        <div class="ai-aura" aria-hidden="true"></div>
+        <div class="ai-particles" aria-hidden="true"></div>
+        <img
+          class="ai-window-image"
+          src="/ai-icon"
+          alt="AI debate avatar"
+          loading="eager"
+          decoding="async"
+        />
+      </div>
+      <p id="ai-window-label" class="ai-window-label">AI Ready</p>
+      <p id="ai-window-hint" class="ai-window-hint">Press Esc to minimize overlay</p>
+    </aside>
+
+    <div id="audio-stage" aria-hidden="true"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.min.js"></script>
+    <script type="module" src="/static/app.js"></script>
+  </body>
+</html>
